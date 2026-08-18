@@ -1,3 +1,5 @@
+import { Badge,priorityTone } from "@/components/Badge";
+
 type Task = {
   id: string;
   title: string;
@@ -48,9 +50,7 @@ export default function DashboardPage() {
               className="flex items-center justify-between rounded-md border border-gray-200 bg-white px-4 py-2"
             >
               <span>{task.title}</span>
-              <span className="text-xs uppercase text-gray-400">
-                {task.priority}
-              </span>
+              <Badge label={task.priority} tone={priorityTone(task.priority)} />
             </li>
           ))}
         </ul>
