@@ -38,3 +38,20 @@ export function statusTone(
   if (status === "abandoned") return "gray";
   return "gray"; // planning
 }
+
+export function opportunityStatusTone(
+  status:
+    | "interested"
+    | "preparing"
+    | "applied"
+    | "interview"
+    | "accepted"
+    | "rejected"
+    | "closed"
+): BadgeTone {
+  if (status === "accepted") return "green";
+  if (status === "interview") return "blue";
+  if (status === "applied" || status === "preparing") return "yellow";
+  if (status === "rejected" || status === "closed") return "gray";
+  return "gray"; // interested
+}
