@@ -55,3 +55,12 @@ export function opportunityStatusTone(
   if (status === "rejected" || status === "closed") return "gray";
   return "gray"; // interested
 }
+
+export function taskStatusTone(
+  status: "todo" | "in_progress" | "done" | "blocked"
+): BadgeTone {
+  if (status === "done") return "green";
+  if (status === "in_progress") return "blue";
+  if (status === "blocked") return "red";
+  return "gray"; // todo
+}
