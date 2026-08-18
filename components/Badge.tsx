@@ -28,3 +28,13 @@ export function priorityTone(priority: "low" | "medium" | "high"): BadgeTone {
   if (priority === "medium") return "yellow";
   return "gray";
 }
+
+export function statusTone(
+  status: "planning" | "active" | "paused" | "completed" | "abandoned"
+): BadgeTone {
+  if (status === "active") return "blue";
+  if (status === "completed") return "green";
+  if (status === "paused") return "yellow";
+  if (status === "abandoned") return "gray";
+  return "gray"; // planning
+}

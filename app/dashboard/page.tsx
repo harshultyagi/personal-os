@@ -1,4 +1,5 @@
 import { Badge,priorityTone } from "@/components/Badge";
+import { ProgressBar } from "@/components/ProgressBar";
 
 type Task = {
   id: string;
@@ -82,16 +83,8 @@ export default function DashboardPage() {
               key={project.id}
               className="rounded-md border border-gray-200 bg-white px-4 py-2"
             >
-              <div className="flex justify-between">
-                <span>{project.title}</span>
-                <span className="text-gray-500">{project.progress}%</span>
-              </div>
-              <div className="mt-2 h-2 w-full rounded-full bg-gray-100">
-                <div
-                  className="h-2 rounded-full bg-gray-900"
-                  style={{ width: `${project.progress}%` }}
-                />
-              </div>
+              <span className="mb-2 block">{project.title}</span>
+              <ProgressBar progress={project.progress} />
             </li>
           ))}
         </ul>
