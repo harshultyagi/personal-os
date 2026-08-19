@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { logout } from '@/app/login/actions'
 
 const navLinks = [
   { href: "/dashboard", label: "Dashboard" },
@@ -23,10 +24,18 @@ export default function Navbar() {
               className="hover:text-gray-900"
             >
               {link.label}
-            </Link>
+            </Link>            
           ))}
+          <form action={logout}>
+                <button type="submit" className="text-sm text-gray-600 hover:text-gray-900">
+                  Log out
+                </button>
+              </form>
         </div>
       </div>
     </nav>
   );
 }
+
+
+
