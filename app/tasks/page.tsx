@@ -1,91 +1,57 @@
-import { Badge, priorityTone, taskStatusTone } from "@/components/Badge";
+import { createClient } from '@/utils/supabase/server'
+import Link from 'next/link'
+import { toggleTaskStatus } from './actions'
 
-type Task = {
-  id: string;
-  title: string;
-  status: "todo" | "in_progress" | "done" | "blocked";
-  priority: "low" | "medium" | "high";
-  dueDate?: string;
-  projectTitle?: string;
-  opportunityTitle?: string;
-};
+export default async function TasksPage() {
+  const supabase = await createClient()
+  const { data: tasks, error } = await supabase
+    .from('tasks')
+    .select('*, projects(name)')
+    .order('due_date', { ascending: true, nullsFirst: false })
 
-const tasks: Task[] = [
-  {
-    id: "1",
-    title: "Implement object detection",
-    status: "in_progress",
-    priority: "high",
-    dueDate: "2026-08-25",
-    projectTitle: "Vision-Based Robotic Grasp Planner",
-  },
-  {
-    id: "2",
-    title: "Complete ROS publisher/subscriber tutorial",
-    status: "todo",
-    priority: "high",
-    dueDate: "2026-08-22",
-    opportunityTitle: "Robotics Intern",
-  },
-  {
-    id: "3",
-    title: "Study Thermodynamics — Chapter 4",
-    status: "todo",
-    priority: "medium",
-    dueDate: "2026-08-24",
-  },
-  {
-    id: "4",
-    title: "Set up navbar and routing",
-    status: "done",
-    priority: "low",
-    projectTitle: "Personal OS (this app)",
-  },
-];
+  if (error) return <p className="text-red-600">Failed to load: {error.message}</p>
 
-
-
-export default function TasksPage() {
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Tasks</h1>
-        <button className="rounded-md bg-gray-900 px-3 py-1.5 text-sm text-white hover:bg-gray-700">
+        <Link href="/tasks/new" className="rounded bg-black px-3 py-1.5 text-sm text-white">
           + New Task
-        </button>
+        </Link>
       </div>
 
-      <ul className="space-y-3">
-        {tasks.map((task) => (
-          <li
-            key={task.id}
-            className="rounded-md border border-gray-200 bg-white px-4 py-3"
-          >
-            <div className="flex items-center justify-between">
-              <span
-                className={
-                  task.status === "done"
-                    ? "text-gray-400 line-through"
-                    : "font-medium"
-                }
-              >
-                {task.title}
-              </span>
-              <div className="flex gap-2">
-                <Badge label={task.status} tone={taskStatusTone(task.status)} />
-                <Badge label={task.priority} tone={priorityTone(task.priority)} />
-              </div>
+      {tasks.length === 0 ? (
+        <p className="mt-4 text-gray-500">No tasks yet.</p>
+      ) : (
+        <div className="mt-6 space-y-2">
+          {tasks.map((task) => (
+            <div key={task.id} className="flex items-center gap-3 rounded border p-3">
+              <form action={toggleTaskStatus}>
+                <input type="hidden" name="id" value={task.id} />
+                <input type="hidden" name="currentStatus" value={task.status} />
+                <button
+                  type="submit"
+                  className={`h-5 w-5 rounded border ${
+                    task.status === 'done' ? 'bg-black' : 'bg-white'
+                  }`}
+                  aria-label="Toggle done"
+                />
+              </form>
+
+              <Link href={`/tasks/${task.id}`} className="flex-1">
+                <p className={task.status === 'done' ? 'text-gray-400 line-through' : ''}>
+                  {task.title}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {task.projects?.name && `${task.projects.name} · `}
+                  {task.due_date && `due ${task.due_date} · `}
+                  {task.priority}
+                </p>
+              </Link>
             </div>
-            {(task.projectTitle || task.opportunityTitle || task.dueDate) && (
-              <div className="mt-2 flex gap-3 text-xs text-gray-500">
-                {task.projectTitle && <span>📁 {task.projectTitle}</span>}
-                {task.opportunityTitle && <span>💼 {task.opportunityTitle}</span>}
-                {task.dueDate && <span>Due {task.dueDate}</span>}
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+          ))}
+        </div>
+      )}
     </div>
-  );
+  )
 }
