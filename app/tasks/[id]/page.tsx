@@ -15,8 +15,8 @@ export default async function TaskDetailPage({
     .from('tasks')
     .select('*, projects(name)')
     .eq('id', id)
+    .returns<Array<{ id: string; title: string; status: string; priority: string; due_date: string | null; projects: { name: string } | null }>>()
     .single()
-
   if (error || !task) notFound()
 
   return (

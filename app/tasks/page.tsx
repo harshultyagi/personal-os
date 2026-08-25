@@ -8,6 +8,7 @@ export default async function TasksPage() {
     .from('tasks')
     .select('*, projects(name)')
     .order('due_date', { ascending: true, nullsFirst: false })
+    .returns<Array<{ id: string; title: string; status: string; priority: string; due_date: string | null; projects: { name: string } | null }>>()
 
   if (error) return <p className="text-red-600">Failed to load: {error.message}</p>
 

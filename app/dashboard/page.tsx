@@ -18,7 +18,8 @@ export default async function DashboardPage() {
       .neq('status', 'done')
       .not('due_date', 'is', null)
       .order('due_date', { ascending: true })
-      .limit(5),
+      .limit(5)
+      .returns<{ id: string; title: string; due_date: string | null; projects: { name: string } | null }[]>(),
     supabase
       .from('opportunities')
       .select('id, title, deadline')
