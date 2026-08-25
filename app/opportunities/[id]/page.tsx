@@ -1,118 +1,48 @@
-import { notFound } from "next/navigation";
-import { Badge, priorityTone, opportunityStatusTone } from "@/components/Badge";
-
-type Opportunity = {
-  id: string;
-  title: string;
-  organization: string;
-  type: "internship" | "hackathon" | "research" | "competition" | "job" | "other";
-  location: string;
-  deadline: string;
-  status:
-    | "interested"
-    | "preparing"
-    | "applied"
-    | "interview"
-    | "accepted"
-    | "rejected"
-    | "closed";
-  priority: "low" | "medium" | "high";
-  description: string;
-  requiredSkills: string[];
-  url?: string;
-};
-
-const opportunities: Opportunity[] = [
-  {
-    id: "1",
-    title: "Robotics Intern",
-    organization: "XYZ Robotics",
-    type: "internship",
-    location: "Munich, Germany",
-    deadline: "2026-09-20",
-    status: "preparing",
-    priority: "high",
-    description:
-      "Work on perception and control systems for warehouse robots.",
-    requiredSkills: ["Python", "ROS", "C++", "Computer Vision"],
-    url: "https://example.com/xyz-robotics-internship",
-  },
-  {
-    id: "2",
-    title: "AI Hackathon",
-    organization: "TechFest",
-    type: "hackathon",
-    location: "Remote",
-    deadline: "2026-09-05",
-    status: "interested",
-    priority: "medium",
-    description: "48-hour hackathon focused on applied machine learning.",
-    requiredSkills: ["Python", "Machine Learning"],
-  },
-];
-
-function daysUntil(dateStr: string): number {
-  const diff = new Date(dateStr).getTime() - new Date().getTime();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
-}
+import { createClient } from '@/utils/supabase/server'
+import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import { deleteOpportunity } from '../actions'
 
 export default async function OpportunityDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>
 }) {
-  const { id } = await params;
-  const opportunity = opportunities.find((o) => o.id === id);
+  const { id } = await params
+  const supabase = await createClient()
 
-  if (!opportunity) {
-    notFound();
-  }
+  const { data: opp, error } = await supabase
+    .from('opportunities')
+    .select('*')
+    .eq('id', id)
+    .single()
 
-  const days = daysUntil(opportunity.deadline);
+  if (error || !opp) notFound()
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-lg px-4 py-8">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{opportunity.title}</h1>
-          <p className="text-gray-500">
-            {opportunity.organization} · {opportunity.location}
-          </p>
-        </div>
+        <h1 className="text-2xl font-semibold">{opp.title}</h1>
         <div className="flex gap-2">
-          <Badge
-            label={opportunity.status}
-            tone={opportunityStatusTone(opportunity.status)}
-          />
-          <Badge label={opportunity.priority} tone={priorityTone(opportunity.priority)} />
+          <Link href={`/opportunities/${opp.id}/edit`} className="rounded border px-3 py-1.5 text-sm">
+            Edit
+          </Link>
+          <form action={deleteOpportunity}>
+            <input type="hidden" name="id" value={opp.id} />
+            <button type="submit" className="rounded border border-red-300 px-3 py-1.5 text-sm text-red-600">
+              Delete
+            </button>
+          </form>
         </div>
       </div>
 
-      <p className="text-sm text-gray-600">
-        Deadline: {opportunity.deadline} ({days} {days === 1 ? "day" : "days"} left)
-      </p>
-
-      <p className="text-gray-600">{opportunity.description}</p>
-
-      <div>
-        <h2 className="mb-2 text-sm font-semibold uppercase text-gray-500">
-          Required Skills
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {opportunity.requiredSkills.map((skill) => (
-            <Badge key={skill} label={skill} tone="blue" />
-          ))}
-        </div>
+      <p className="mt-4 text-sm text-gray-600">{opp.organization} — {opp.type}</p>
+      <p className="mt-1 text-sm text-gray-600">{opp.location}</p>
+      <div className="mt-4 flex gap-3 text-sm text-gray-500">
+        <span>Status: {opp.status}</span>
+        {opp.deadline && <span>Deadline: {opp.deadline}</span>}
       </div>
-
-      {opportunity.url && (
-        <a
-          href={opportunity.url}
-          className="text-sm text-blue-600 hover:underline"
-        >
-          View listing →
-        </a>
-      )}
+      {opp.notes && <p className="mt-4 text-gray-700">{opp.notes}</p>}
     </div>
-  );
+  )
 }
