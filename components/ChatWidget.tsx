@@ -45,17 +45,15 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Floating toggle button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-black text-white shadow-lg hover:bg-gray-800"
+        className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-black text-white shadow-lg hover:bg-gray-800 sm:bottom-6 sm:right-6"
       >
         {isOpen ? '✕' : '💬'}
       </button>
 
-      {/* Chat panel */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 flex h-[500px] w-96 flex-col rounded-lg border bg-white shadow-xl">
+        <div className="fixed inset-x-4 bottom-24 z-50 flex h-[70vh] max-h-[500px] flex-col rounded-lg border bg-white shadow-xl sm:inset-x-auto sm:right-6 sm:w-96">
           <div className="border-b p-3 font-medium">Assistant</div>
 
           <div className="flex-1 space-y-3 overflow-y-auto p-3">
