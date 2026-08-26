@@ -3,22 +3,25 @@
 import { useState, useRef, useEffect } from 'react'
 
 type Message = { role: 'user' | 'assistant'; content: string }
+type Suggestion = { id: string; text: string; prompt: string }
 
-export default function ChatWidget() {
+export default function ChatWidget({ initialSuggestions }: { initialSuggestions: Suggestion[] }) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [suggestions, setSuggestions] = useState(initialSuggestions)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  async function sendMessage() {
-    if (!input.trim() || loading) return
+  async function sendMessage(overrideText?: string) {
+    const text = overrideText ?? input
+    if (!text.trim() || loading) return
 
-    const newMessages: Message[] = [...messages, { role: 'user', content: input }]
+    const newMessages: Message[] = [...messages, { role: 'user', content: text }]
     setMessages(newMessages)
     setInput('')
     setLoading(true)
@@ -43,8 +46,43 @@ export default function ChatWidget() {
     }
   }
 
+  function handleSuggestionClick(s: Suggestion) {
+    setIsOpen(true)
+    setInput(s.prompt)
+  }
+
+  function dismissSuggestion(id: string) {
+    setSuggestions((prev) => prev.filter((s) => s.id !== id))
+  }
+
   return (
     <>
+      {/* Suggestion pills — hidden while the chat panel is open */}
+      {!isOpen && suggestions.length > 0 && (
+        <div className="fixed bottom-24 right-5 z-50 flex flex-col items-end gap-2 sm:right-6">
+          {suggestions.map((s) => (
+            <div
+              key={s.id}
+              className="flex max-w-[240px] items-center gap-2 rounded-full border bg-white px-3 py-1.5 text-xs shadow-md sm:max-w-xs"
+            >
+              <button
+                onClick={() => handleSuggestionClick(s)}
+                className="text-left text-gray-800 hover:text-black"
+              >
+                {s.text}
+              </button>
+              <button
+                onClick={() => dismissSuggestion(s.id)}
+                aria-label="Dismiss suggestion"
+                className="shrink-0 text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-black text-white shadow-lg hover:bg-gray-800 sm:bottom-6 sm:right-6"
@@ -87,7 +125,7 @@ export default function ChatWidget() {
               className="flex-1 rounded border px-3 py-1.5 text-sm"
             />
             <button
-              onClick={sendMessage}
+              onClick={() => sendMessage()}
               disabled={loading}
               className="rounded bg-black px-3 py-1.5 text-sm text-white disabled:opacity-50"
             >
