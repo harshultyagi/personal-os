@@ -1,5 +1,8 @@
 import { google } from 'googleapis'
 import { createClient } from '@/utils/supabase/server'
+import { GoogleGenAI } from '@google/genai'
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
 
 export async function getGmailClient(userId: string) {
   const supabase = await createClient()
@@ -26,7 +29,6 @@ export async function getGmailClient(userId: string) {
     expiry_date: tokenRow.expiry_date,
   })
 
-  // Whenever googleapis silently refreshes the access token, persist it
   oauth2Client.on('tokens', async (newTokens) => {
     if (newTokens.access_token) {
       await supabase
@@ -41,12 +43,13 @@ export async function getGmailClient(userId: string) {
 
   return google.gmail({ version: 'v1', auth: oauth2Client })
 }
+
 export async function fetchRecentEmails(userId: string) {
   const gmail = await getGmailClient(userId)
 
   const { data: list } = await gmail.users.messages.list({
     userId: 'me',
-    q: 'newer_than:1d', // Gmail's own search syntax — mirrors what you'd type in the Gmail search bar
+    q: 'newer_than:1d',
     maxResults: 20,
   })
 
@@ -72,33 +75,64 @@ export async function fetchRecentEmails(userId: string) {
   return emails
 }
 
-import { GoogleGenAI } from '@google/genai'
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
-
 export type ClassifiedEmail = {
   id: string
   subject: string
   from: string
   relevant: boolean
-  category: 'opportunity' | 'deadline' | 'academic' | 'noise'
+  category: 'task' | 'opportunity' | 'academic' | 'noise'
   reason: string
+  task_title?: string
+  due_date?: string | null
+  priority?: 'low' | 'medium' | 'high'
+  opp_title?: string
+  opp_type?: string
+  organization?: string
+  deadline?: string | null
 }
 
 export async function classifyEmails(emails: { id: string; subject: string; from: string; snippet: string }[]) {
   if (emails.length === 0) return []
 
+  const today = new Date().toISOString().split('T')[0]
+
   const prompt = `You are helping a student sort their email into what's actually useful for their career/academic tracking vs noise.
 
-For each email below, classify it as one of: "opportunity" (internships, hackathons, competitions, job-related), "deadline" (something time-sensitive they need to act on), "academic" (coursework/university admin — relevant but not urgent), or "noise" (irrelevant, promotional, automated confirmations with no action needed).
+Today's date is ${today}.
 
-Only mark "relevant": true for opportunity or deadline categories — things genuinely worth surfacing.
+For each email, classify it as one of:
+- "task": something with a specific deadline the student must personally do — quizzes, exams, assignment due dates, form submissions.
+- "opportunity": something to apply to or attend — hackathons, competitions, internships, cultural/tech events, workshops.
+- "academic": relevant university admin/announcements but no personal action needed.
+- "noise": irrelevant, promotional, or automated with no action needed.
+
+Only mark "relevant": true for "task" or "opportunity".
+
+For "task" items, also extract:
+- task_title: a short, clean task name (not the raw email subject)
+- due_date: an ISO date YYYY-MM-DD if a specific date/time is mentioned, else null
+- priority: "low", "medium", or "high" based on urgency
+
+For "opportunity" items, also extract:
+- opp_title: a short, clean name for the opportunity
+- opp_type: one of "hackathon", "competition", "internship", "event", "workshop", or your best short label
+- organization: the hosting organization/company if mentioned, else null
+- deadline: an ISO date YYYY-MM-DD if an application/event deadline is mentioned, else null
 
 Emails:
 ${emails.map((e, i) => `${i + 1}. ID: ${e.id}\nSubject: ${e.subject}\nFrom: ${e.from}\nSnippet: ${e.snippet}`).join('\n\n')}
 
 Respond with ONLY a JSON array, no other text, in this exact shape:
-[{"id": "...", "subject": "...", "from": "...", "relevant": true/false, "category": "...", "reason": "one short sentence"}]`
+[{
+  "id": "...", "subject": "...", "from": "...", "relevant": true/false, "category": "...", "reason": "one short sentence",
+  "task_title": "..." (only if category is task),
+  "due_date": "YYYY-MM-DD" or null (only if category is task),
+  "priority": "..." (only if category is task),
+  "opp_title": "..." (only if category is opportunity),
+  "opp_type": "..." (only if category is opportunity),
+  "organization": "..." or null (only if category is opportunity),
+  "deadline": "YYYY-MM-DD" or null (only if category is opportunity)
+}]`
 
   const response = await ai.models.generateContent({
     model: 'gemini-3.6-flash',
@@ -117,7 +151,7 @@ Respond with ONLY a JSON array, no other text, in this exact shape:
 
 export async function getOrCreateBriefing(userId: string) {
   const supabase = await createClient()
-  const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0]
 
   const { data: existing } = await supabase
     .from('daily_briefings')
@@ -134,7 +168,7 @@ export async function getOrCreateBriefing(userId: string) {
     .eq('user_id', userId)
     .maybeSingle()
 
-  if (!tokenRow) return null // Gmail not connected — nothing to brief
+  if (!tokenRow) return null
 
   const emails = await fetchRecentEmails(userId)
   const classified = await classifyEmails(emails)
