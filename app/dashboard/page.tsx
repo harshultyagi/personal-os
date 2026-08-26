@@ -1,8 +1,10 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
+import { getOrCreateBriefing } from '@/lib/google'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   const [
     { count: activeProjects },
@@ -28,9 +30,32 @@ export default async function DashboardPage() {
       .limit(5),
   ])
 
+  const briefing = user ? await getOrCreateBriefing(user.id) : null
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-semibold">Dashboard</h1>
+
+      <a
+        href="/api/auth/google/start"
+        className="mt-2 inline-block rounded border px-3 py-1.5 text-sm"
+      >
+        Connect Gmail
+      </a>
+
+      {briefing && briefing.length > 0 && (
+        <div className="mt-6 rounded border border-blue-200 bg-blue-50 p-4">
+          <h2 className="font-medium text-gray-800">Today's Briefing</h2>
+          <div className="mt-2 space-y-2">
+            {briefing.map((item) => (
+              <div key={item.id} className="rounded border bg-white p-3">
+                <p className="text-sm font-medium">{item.subject}</p>
+                <p className="text-xs text-gray-500">{item.category} · {item.reason}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-2">
         <div className="rounded border p-4">
@@ -41,9 +66,7 @@ export default async function DashboardPage() {
           <p className="text-sm text-gray-500">Pending Tasks</p>
           <p className="mt-1 text-3xl font-semibold">{pendingTasks ?? 0}</p>
         </div>
-      </div>
-
-      <div className="mt-8 grid gap-6 sm:grid-cols-2">
+      </div>      <div className="mt-8 grid gap-6 sm:grid-cols-2">
         <div>
           <h2 className="font-medium text-gray-700">Upcoming Task Deadlines</h2>
           {!upcomingTasks || upcomingTasks.length === 0 ? (
@@ -86,3 +109,7 @@ export default async function DashboardPage() {
     </div>
   )
 }
+
+      
+
+      
