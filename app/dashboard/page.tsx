@@ -50,39 +50,44 @@ export default async function DashboardPage() {
             {briefing.map((item) => {
               const isTask = item.category === 'task'
               const isOpportunity = item.category === 'opportunity'
+              const gmailLink = `https://mail.google.com/mail/u/0/#all/${item.id}`
 
               const taskHref = `/tasks/new?title=${encodeURIComponent(
                 item.task_title ?? item.subject
               )}&due_date=${encodeURIComponent(item.due_date ?? '')}&priority=${encodeURIComponent(
                 item.priority ?? 'medium'
-              )}`
+              )}&summary=${encodeURIComponent(item.summary ?? '')}&gmail_link=${encodeURIComponent(gmailLink)}`
 
               const oppHref = `/opportunities/new?title=${encodeURIComponent(
                 item.opp_title ?? item.subject
               )}&type=${encodeURIComponent(item.opp_type ?? '')}&organization=${encodeURIComponent(
                 item.organization ?? ''
-              )}&deadline=${encodeURIComponent(item.deadline ?? '')}`
+              )}&deadline=${encodeURIComponent(item.deadline ?? '')}&summary=${encodeURIComponent(
+                item.summary ?? ''
+              )}&gmail_link=${encodeURIComponent(gmailLink)}`
 
               return (
                 <div key={item.id} className="rounded border bg-white p-3">
                   <p className="text-sm font-medium">{item.subject}</p>
                   <p className="text-xs text-gray-500">{item.category} · {item.reason}</p>
-                  {isTask && (
-                    <Link
-                      href={taskHref}
-                      className="mt-2 inline-block rounded bg-black px-2.5 py-1 text-xs text-white"
-                    >
-                      + Add as Task
-                    </Link>
-                  )}
-                  {isOpportunity && (
-                    <Link
-                      href={oppHref}
-                      className="mt-2 inline-block rounded bg-black px-2.5 py-1 text-xs text-white"
-                    >
-                      + Add as Opportunity
-                    </Link>
-                  )}
+                  <div className="mt-2 flex gap-2">
+                    {isTask && (
+                      <Link
+                        href={taskHref}
+                        className="inline-block rounded bg-black px-2.5 py-1 text-xs text-white"
+                      >
+                        + Add as Task
+                      </Link>
+                    )}
+                    {isOpportunity && (
+                      <Link
+                        href={oppHref}
+                        className="inline-block rounded bg-black px-2.5 py-1 text-xs text-white"
+                      >
+                        + Add as Opportunity
+                      </Link>
+                    )}
+                  </div>
                 </div>
               )
             })}

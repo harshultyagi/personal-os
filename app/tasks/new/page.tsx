@@ -4,7 +4,14 @@ import { createTask } from '../actions'
 export default async function NewTaskPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; title?: string; due_date?: string; priority?: string }>
+  searchParams: Promise<{
+    error?: string
+    title?: string
+    due_date?: string
+    priority?: string
+    summary?: string
+    gmail_link?: string
+  }>
 }) {
   const params = await searchParams
   const supabase = await createClient()
@@ -16,6 +23,23 @@ export default async function NewTaskPage({
 
       {params.error && (
         <p className="mt-4 rounded bg-red-50 p-2 text-sm text-red-600">{params.error}</p>
+      )}
+
+      {params.summary && (
+        <div className="mt-4 rounded border border-blue-200 bg-blue-50 p-3">
+          <p className="text-xs font-medium text-blue-900">From your email:</p>
+          <p className="mt-1 text-sm text-gray-700">{params.summary}</p>
+          {params.gmail_link && (
+            <a
+              href={params.gmail_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block text-xs text-blue-600 underline"
+            >
+              View original email →
+            </a>
+          )}
+        </div>
       )}
 
       <form action={createTask} className="mt-6 space-y-4">
