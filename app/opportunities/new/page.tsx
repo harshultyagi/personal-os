@@ -3,7 +3,7 @@ import { createOpportunity } from '../actions'
 export default async function NewOpportunityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; title?: string; type?: string; organization?: string; deadline?: string }>
 }) {
   const params = await searchParams
 
@@ -18,15 +18,20 @@ export default async function NewOpportunityPage({
       <form action={createOpportunity} className="mt-6 space-y-4">
         <div>
           <label className="block text-sm font-medium">Title</label>
-          <input name="title" required className="mt-1 w-full rounded border px-3 py-2" />
+          <input name="title" defaultValue={params.title ?? ''} required className="mt-1 w-full rounded border px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm font-medium">Type</label>
-          <input name="type" placeholder="internship / hackathon / competition" className="mt-1 w-full rounded border px-3 py-2" />
+          <input
+            name="type"
+            defaultValue={params.type ?? ''}
+            placeholder="internship / hackathon / competition"
+            className="mt-1 w-full rounded border px-3 py-2"
+          />
         </div>
         <div>
           <label className="block text-sm font-medium">Organization</label>
-          <input name="organization" className="mt-1 w-full rounded border px-3 py-2" />
+          <input name="organization" defaultValue={params.organization ?? ''} className="mt-1 w-full rounded border px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm font-medium">Location</label>
@@ -38,7 +43,7 @@ export default async function NewOpportunityPage({
         </div>
         <div>
           <label className="block text-sm font-medium">Deadline</label>
-          <input type="date" name="deadline" className="mt-1 w-full rounded border px-3 py-2" />
+          <input type="date" name="deadline" defaultValue={params.deadline ?? ''} className="mt-1 w-full rounded border px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm font-medium">Notes</label>

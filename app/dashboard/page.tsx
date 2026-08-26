@@ -47,12 +47,45 @@ export default async function DashboardPage() {
         <div className="mt-6 rounded border border-blue-200 bg-blue-50 p-4">
           <h2 className="font-medium text-gray-800">Today's Briefing</h2>
           <div className="mt-2 space-y-2">
-            {briefing.map((item) => (
-              <div key={item.id} className="rounded border bg-white p-3">
-                <p className="text-sm font-medium">{item.subject}</p>
-                <p className="text-xs text-gray-500">{item.category} · {item.reason}</p>
-              </div>
-            ))}
+            {briefing.map((item) => {
+              const isTask = item.category === 'task'
+              const isOpportunity = item.category === 'opportunity'
+
+              const taskHref = `/tasks/new?title=${encodeURIComponent(
+                item.task_title ?? item.subject
+              )}&due_date=${encodeURIComponent(item.due_date ?? '')}&priority=${encodeURIComponent(
+                item.priority ?? 'medium'
+              )}`
+
+              const oppHref = `/opportunities/new?title=${encodeURIComponent(
+                item.opp_title ?? item.subject
+              )}&type=${encodeURIComponent(item.opp_type ?? '')}&organization=${encodeURIComponent(
+                item.organization ?? ''
+              )}&deadline=${encodeURIComponent(item.deadline ?? '')}`
+
+              return (
+                <div key={item.id} className="rounded border bg-white p-3">
+                  <p className="text-sm font-medium">{item.subject}</p>
+                  <p className="text-xs text-gray-500">{item.category} · {item.reason}</p>
+                  {isTask && (
+                    <Link
+                      href={taskHref}
+                      className="mt-2 inline-block rounded bg-black px-2.5 py-1 text-xs text-white"
+                    >
+                      + Add as Task
+                    </Link>
+                  )}
+                  {isOpportunity && (
+                    <Link
+                      href={oppHref}
+                      className="mt-2 inline-block rounded bg-black px-2.5 py-1 text-xs text-white"
+                    >
+                      + Add as Opportunity
+                    </Link>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -66,7 +99,9 @@ export default async function DashboardPage() {
           <p className="text-sm text-gray-500">Pending Tasks</p>
           <p className="mt-1 text-3xl font-semibold">{pendingTasks ?? 0}</p>
         </div>
-      </div>      <div className="mt-8 grid gap-6 sm:grid-cols-2">
+      </div>
+
+      <div className="mt-8 grid gap-6 sm:grid-cols-2">
         <div>
           <h2 className="font-medium text-gray-700">Upcoming Task Deadlines</h2>
           {!upcomingTasks || upcomingTasks.length === 0 ? (
@@ -109,7 +144,3 @@ export default async function DashboardPage() {
     </div>
   )
 }
-
-      
-
-      

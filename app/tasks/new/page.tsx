@@ -4,7 +4,7 @@ import { createTask } from '../actions'
 export default async function NewTaskPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; title?: string; due_date?: string; priority?: string }>
 }) {
   const params = await searchParams
   const supabase = await createClient()
@@ -21,7 +21,12 @@ export default async function NewTaskPage({
       <form action={createTask} className="mt-6 space-y-4">
         <div>
           <label className="block text-sm font-medium">Title</label>
-          <input name="title" required className="mt-1 w-full rounded border px-3 py-2" />
+          <input
+            name="title"
+            defaultValue={params.title ?? ''}
+            required
+            className="mt-1 w-full rounded border px-3 py-2"
+          />
         </div>
 
         <div>
@@ -45,7 +50,11 @@ export default async function NewTaskPage({
 
         <div>
           <label className="block text-sm font-medium">Priority</label>
-          <select name="priority" defaultValue="medium" className="mt-1 w-full rounded border px-3 py-2">
+          <select
+            name="priority"
+            defaultValue={params.priority ?? 'medium'}
+            className="mt-1 w-full rounded border px-3 py-2"
+          >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
@@ -54,7 +63,12 @@ export default async function NewTaskPage({
 
         <div>
           <label className="block text-sm font-medium">Due Date</label>
-          <input type="date" name="due_date" className="mt-1 w-full rounded border px-3 py-2" />
+          <input
+            type="date"
+            name="due_date"
+            defaultValue={params.due_date ?? ''}
+            className="mt-1 w-full rounded border px-3 py-2"
+          />
         </div>
 
         <button type="submit" className="rounded bg-black px-4 py-2 text-white">
