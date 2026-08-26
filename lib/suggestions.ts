@@ -60,10 +60,18 @@ Generate 2-4 short suggestions, each as a natural chat message the user could se
 Respond with ONLY a JSON array, no other text, in this shape:
 [{"text": "short suggestion shown to the user, under 12 words", "prompt": "the actual message the user would send if they click this, phrased naturally in first person"}]`
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-3.6-flash',
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-  })
+  let response
+  try {
+    response = await ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    })
+  } catch (err) {
+    // Quota exceeded (429), model overloaded (503), etc. — suggestions are
+    // a nice-to-have, so fail soft instead of taking down the layout.
+    console.error('getSuggestions: Gemini API call failed', err)
+    return []
+  }
 
   const text = response.text ?? '[]'
   const cleaned = text.replace(/```json|```/g, '').trim()

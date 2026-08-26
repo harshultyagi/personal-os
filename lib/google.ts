@@ -185,17 +185,26 @@ Respond with ONLY a JSON array, no other text, in this exact shape:
   "deadline": "YYYY-MM-DD" or null (only if category is opportunity)
 }]`
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-3.6-flash',
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-  })
+  let response
+  try {
+    response = await ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    })
+  } catch (err) {
+    // Quota exceeded (429), model overloaded (503), etc. — treat as "nothing
+    // classified this run" rather than crashing whatever called us.
+    console.error('classifyEmails: Gemini API call failed', err)
+    return []
+  }
 
   const text = response.text ?? '[]'
   const cleaned = text.replace(/```json|```/g, '').trim()
 
   try {
     return JSON.parse(cleaned) as ClassifiedEmail[]
-  } catch {
+  } catch (err) {
+    console.error('classifyEmails: failed to parse Gemini response as JSON', err, text)
     return []
   }
 }
@@ -222,6 +231,18 @@ function getCurrentSlot(): 'morning' | 'evening' {
 }
 
 export async function getOrCreateBriefing(userId: string) {
+  try {
+    return await buildBriefing(userId)
+  } catch (err) {
+    // Gmail token issues, Gemini quota/overload, Supabase hiccups, etc. —
+    // the briefing is a bonus widget, not something that should 500 the
+    // whole dashboard.
+    console.error('getOrCreateBriefing: failed to build briefing', err)
+    return null
+  }
+}
+
+async function buildBriefing(userId: string) {
   const supabase = await createClient()
   const today = getTodayIST()
   const currentSlot = getCurrentSlot()
